@@ -3,6 +3,8 @@
 #include <ctime>
 #include <cmath>
 #include <mkl.h>
+#include <iostream>
+#include <fstream>
 
 /*
 1. Crear tres matrices (A, B y C) de dimensión NxN y rellenarlas con valores
@@ -15,9 +17,19 @@ promedio de 100 ejecuciones de la operación A*B.
 */
 
 double* randMat(int N) {
-	double* matrix = (double*)mkl_malloc(N * N * sizeof(double), 64);
+	double* matrix = (double*)mkl_malloc(N*sizeof(double), 64);
+	if (matrix == NULL) { perror("Errror malloc"); exit(1); }
 	for (int i = 0; i < N; i++) {
 		matrix[i] = (double)rand() / (double)10;
+	}
+	return matrix;
+}
+
+float* randMatfloat(int N) {
+	float* matrix = (float*)mkl_malloc(N*sizeof(float), 32);
+	if (matrix == NULL) { perror("Errror malloc"); exit(1); }
+	for (int i = 0; i < N; i++) {
+		matrix[i] = (float)rand() / (float)10;
 	}
 	return matrix;
 }
@@ -30,18 +42,41 @@ void showMatrix(double* m, int len) {
 	printf("} \n");
 }
 
-void calculateProm(int N, double* A, double* B, double* C) {
+double calculateProm(int N) {
 	double fin, inicio = dsecnd(); // Inicializacón falsa
+	double* A = randMat(N*N);
+	double* B = randMat(N*N);
+	double* C = randMat(N*N);
 	inicio = dsecnd(); //Inicio de cronometraje
 	for (int i = 0; i < 100; i++) {
-		A = randMat(N * N);
-		B = randMat(N * N);
 		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, N, N, N, 1, A, N, B, N, 0, C, N);
 	}
 	fin = dsecnd(); //Fin de cronometraje
-	printf("Tiempo total para valor N = %i: %lf ms\n", N,(fin - inicio) * 1.0e3);
-	printf("Tiempo promedio entre 100 para valor N = %i: %lf ms\n", N, ((fin - inicio) * 1.0e3)/100);
+	mkl_free(A);
+	mkl_free(B);
+	mkl_free(C);
+	printf("\nTiempo total para valor N = %i: %lf seg\n", N,(fin - inicio) * 1.0e3);
+	printf("Tiempo promedio entre 100 para valor N = %i: %lf seg\n", N, ((fin - inicio) * 1.0e3)/100);
+	return fin;
 
+}
+
+double calculateFloat(int N) {
+	double fin, inicio = dsecnd(); // Inicializacón falsa
+	float* fa = randMatfloat(N * N);
+	float* fb = randMatfloat(N * N);
+	float* fc = randMatfloat(N * N);
+	inicio = dsecnd(); //Inicio de cronometraje
+	for (int i = 0; i < 100; i++) {
+		cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, N, N, N, 1, fa, N, fb, N, 0, fc, N);
+	}
+	fin = dsecnd(); //Fin de cronometraje
+	mkl_free(fa);
+	mkl_free(fb);
+	mkl_free(fc);
+	printf("\nTiempo total para valor N = %i: %lf seg\n", N, (fin - inicio) * 1.0e3);
+	printf("Tiempo promedio entre 100 para valor N = %i: %lf seg\n", N, ((fin - inicio) * 1.0e3) / 100);
+	return fin;
 }
 
 int randomLen() {
@@ -56,19 +91,27 @@ int main(int argc, char* argv[]) {
 	double* B = randMat(9);
 	double* C = randMat(9);
 
-	showMatrix(A,9);
-	showMatrix(B,9);
-	showMatrix(C,9);
+	showMatrix(A, 9);
+	showMatrix(B, 9);
+	showMatrix(C, 9);
 
 	//2. Calcular el número de GFLOPS para distintos valores de N, realizando el promedio de 100 ejecuciones de la operación A * B
 	//Valor N=3, N=5, N=7, N=9
-	calculateProm(3,A,B,C);
-	calculateProm(5,A,B,C);
-	calculateProm(7,A,B,C);
-	calculateProm(9,A,B,C);
+	using namespace std;
+	ofstream fileD;
+	fileD.open("fileDouble.txt");
+	for (int i = 100; i <= 500; i += 20) {
+		fileD << calculateProm(i);
+	}
+	fileD.close();
+	//[OPTATIVO] Realizar pruebas con aritmética de precisión simple.
+	printf("\n Pruebas con aritmética de precicsión simple:\n");
+	ofstream fileF;
+	fileF.open("fileFloat.txt");
+	for (int i = 100; i <= 500; i += 20){
+		fileF << calculateFloat(i);
+	}
+	fileF.close();
 	std::getchar();
-	mkl_free(A);
-	mkl_free(B);
-	mkl_free(C);
 	return 0;
 }
