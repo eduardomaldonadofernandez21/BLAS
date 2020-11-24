@@ -55,9 +55,9 @@ double calculateProm(int N) {
 	mkl_free(A);
 	mkl_free(B);
 	mkl_free(C);
-	printf("\nTiempo total para valor N = %i: %lf seg\n", N,(fin - inicio) * 1.0e3);
-	printf("Tiempo promedio entre 100 para valor N = %i: %lf seg\n", N, ((fin - inicio) * 1.0e3)/100);
-	return fin;
+	printf("\nTiempo total para valor N = %i: %lf seg\n", N,(fin - inicio));
+	printf("Tiempo promedio entre 100 para valor N = %i: %lf seg\n", N, ((fin - inicio))/100);
+	return (fin - inicio);
 
 }
 
@@ -74,9 +74,9 @@ double calculateFloat(int N) {
 	mkl_free(fa);
 	mkl_free(fb);
 	mkl_free(fc);
-	printf("\nTiempo total para valor N = %i: %lf seg\n", N, (fin - inicio) * 1.0e3);
-	printf("Tiempo promedio entre 100 para valor N = %i: %lf seg\n", N, ((fin - inicio) * 1.0e3) / 100);
-	return fin;
+	printf("\nTiempo total para valor N = %i: %lf seg\n", N, (fin - inicio));
+	printf("Tiempo promedio entre 100 para valor N = %i: %lf seg\n", N, ((fin - inicio)) / 100);
+	return (fin - inicio);
 }
 
 int randomLen() {
@@ -96,22 +96,33 @@ int main(int argc, char* argv[]) {
 	showMatrix(C, 9);
 
 	//2. Calcular el número de GFLOPS para distintos valores de N, realizando el promedio de 100 ejecuciones de la operación A * B
-	//Valor N=3, N=5, N=7, N=9
 	using namespace std;
-	ofstream fileD;
+	ofstream fileD, fileFlops;
 	fileD.open("fileDouble.txt");
-	for (int i = 100; i <= 500; i += 20) {
-		fileD << calculateProm(i);
+	fileFlops.open("fileFlops.txt");
+	for (int i = 100; i <= 700; i += 20) {
+		double t = calculateProm(i);
+		fileD << t << std::endl;
+		fileFlops << (100/t)*pow(10,-8) << std::endl;
+		printf("GFlops para matriz %ix%i: %lf\n", i,i, (100 / t) * pow(10, -8));
 	}
 	fileD.close();
+	fileFlops.close();
+
+
 	//[OPTATIVO] Realizar pruebas con aritmética de precisión simple.
 	printf("\n Pruebas con aritmética de precicsión simple:\n");
-	ofstream fileF;
+	ofstream fileF, fileFflops;
 	fileF.open("fileFloat.txt");
-	for (int i = 100; i <= 500; i += 20){
-		fileF << calculateFloat(i);
+	fileFflops.open("fileFflops.txt");
+	for (int i = 100; i <= 700; i += 20){
+		double t = calculateFloat(i);
+		fileF << t << std::endl;
+		fileFflops << (100 / t) * pow(10, -8) << std::endl;
+		printf("GFlops para matriz %ix%i: %lf\n", i, i, (100 / t) * pow(10, -8));
 	}
 	fileF.close();
+	fileFlops.close();
 	std::getchar();
 	return 0;
 }
